@@ -1,5 +1,5 @@
-var/index
-reranker_weights
+index/
+reranker_weights/
 
 
 # Byte-compiled / optimized / DLL files

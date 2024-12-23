@@ -8,5 +8,4 @@ requests
 ir_datasets
 python-terrier
 transformers
-pandas
 torch
