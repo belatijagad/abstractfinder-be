@@ -1,7 +1,8 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
 from services.retrieval_service import RetrievalService
-from schemas.retrieval import SearchResult
+from schemas.retrieval import SearchResponse
+from api.routes.query_refinement import qr_service
 
 router = APIRouter()
 retrieval_service = RetrievalService()
@@ -14,10 +15,21 @@ async def index() -> str:
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=str(e))
 
-@router.get('/search', response_model=List[SearchResult], response_model_exclude_none=True)
+@router.get('/search', response_model=SearchResponse)
 async def search(query: str, k: int = 30):
   try:
-    results = retrieval_service.retrieve(query, k)
-    return [{'docno': doc['docno'], 'text': doc['text'], 'score': score} for doc, score in results]
+    original_results = retrieval_service.retrieve(query, k)
+    refined_query = await qr_service.refine_query(query)
+    refined_results = retrieval_service.retrieve(refined_query, k)
+    return {
+      'original': {
+        'query': query,
+        'results': [{'docno': doc['docno'], 'text': doc['text'], 'title': doc['title'], 'score': score} for doc, score in original_results],
+      },
+      'refined': {
+        'query': refined_query,
+        'results': [{'docno': doc['docno'], 'text': doc['text'], 'title': doc['title'], 'score': score} for doc, score in refined_results],
+      }
+    }
   except Exception as e:
     raise HTTPException(status_code=500, detail=str(e))
