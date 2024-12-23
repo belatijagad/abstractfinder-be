@@ -1,8 +1,10 @@
 from pydantic_settings import BaseSettings
-from pathlib import Path
 from functools import lru_cache
 from dotenv import load_dotenv
+import logging
 import os
+
+logging.disable(logging.WARNING)
 
 load_dotenv()
 
@@ -14,11 +16,10 @@ class Settings(BaseSettings):
   MODEL_TYPE: str = os.getenv('MODEL_TYPE', 'gemini-1.5-flash')
   INDEX_PATH: str = os.getenv('INDEX_PATH', '/index')
   DEBUG: bool = os.getenv('DEBUG', False)
-
   class Config:
     case_sensitive = True
     env_file = '.env'
-
+    
 @lru_cache()
 def get_settings() -> Settings:
   return Settings()

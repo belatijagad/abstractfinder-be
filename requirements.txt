@@ -5,3 +5,7 @@ fastapi
 pydantic-settings
 python-dotenv
 requests
+ir_datasets
+python-terrier
+transformers
+torch

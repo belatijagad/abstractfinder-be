@@ -19,7 +19,7 @@ app.add_middleware(
 
 app.include_router(
   search.router,
-  prefix=f'{settings.API_STR}/search',
+  prefix=f'{settings.API_STR}/retriever',
   tags=['search']
 )
 
