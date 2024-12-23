@@ -9,7 +9,6 @@ app = FastAPI(
   description='LLM-powered search engine'
 )
 
-# Configure CORS
 app.add_middleware(
   CORSMiddleware,
   allow_origins=['*'],
