@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from config import settings
-from api.routes import search
+from core.config import settings
+from api.routes import search, query_refinement
 
 app = FastAPI(
   title=settings.PROJECT_NAME,
@@ -18,16 +18,21 @@ app.add_middleware(
   allow_headers=['*'],
 )
 
-# Include routers
 app.include_router(
   search.router,
   prefix=f'{settings.API_STR}/search',
   tags=['search']
 )
 
+app.include_router(
+  query_refinement.router,
+  prefix=f'{settings.API_STR}/refine',
+  tags=['refine']
+)
+
 @app.get('/')
 async def root():
   return {
-    'message': 'Welcome to TasteGraph API',
+    'message': 'Welcome to Abstract Finder!',
     'version': settings.PROJECT_VERSION
   }
