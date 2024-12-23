@@ -24,11 +24,11 @@ async def search(query: str, k: int = 30):
     return {
       'original': {
         'query': query,
-        'results': [{'docno': doc['docno'], 'text': doc['text'], 'title': doc['title'], 'score': score} for doc, score in original_results],
+        'results': [{'docno': doc['docno'], 'text': doc['text'], 'title': doc['title'].title(), 'score': score} for doc, score in original_results],
       },
       'refined': {
         'query': refined_query,
-        'results': [{'docno': doc['docno'], 'text': doc['text'], 'title': doc['title'], 'score': score} for doc, score in refined_results],
+        'results': [{'docno': doc['docno'], 'text': doc['text'], 'title': doc['title'].title(), 'score': score} for doc, score in refined_results],
       }
     }
   except Exception as e:
