@@ -23,6 +23,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install gdown
+
+      - name: Download and prepare model weights
+        run: |
+          mkdir -p reranker_weights
+          gdown ${{ secrets.MODEL_WEIGHTS_LINK }}
+          unzip path.zip
+          mv to/modern_bert_reranker/* reranker_weights/
+          rm -rf to path.zip
 
       - name: Install SSH key
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -37,17 +46,17 @@ jobs:
         run: |
           # Remove old venv if exists
           ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} '
-            rm -rf ~/fastapi-app/venv
+            rm -rf ~/fastapi-app/venv ~/fastapi-app/reranker_weights
           '
 
           # Install required packages (optimized)
           ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} '
            sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq && 
-           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-venv python3-pip
+           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-venv python3-pip unzip
           '
           
           # Create directory first
-          ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} 'mkdir -p ~/fastapi-app'
+          ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} 'mkdir -p ~/fastapi-app/reranker_weights'
           
           # Create new virtual environment and install pip
           ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} '
