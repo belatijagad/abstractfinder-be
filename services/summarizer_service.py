@@ -7,11 +7,28 @@ class SummarizerService:
     self.settings = get_settings()
     self.client = OpenAI(api_key=self.settings.LLM_API_KEY, base_url='https://generativelanguage.googleapis.com/v1beta/openai/')
   async def summarize_retrieval(self, query:str, documents: List[str]) -> str:
-    topk_concat = ''
-    for i, doc in enumerate(documents): topk_concat += f'Document {i}: {doc}; '
+    tagged_docs = []
+    for i, doc in enumerate(documents):
+        tag = f"[{(i % 3 + 1)}{'a' if i < 3 else 'b'}]"
+        tagged_docs.append(f"{tag} {doc}")
+    topk_concat = ';'.join(tagged_docs)
     messages = [
-      {'role': 'system', 'content': 'You\'re a research paper\'s abstract summarizer. Your task is to summarize the top-k retrieved research abstract and elaborate to the user whether it\'s relevant or not to the user\'s query.'},
-      {'role': 'user', 'content': f'# Query: {query}\n # Retrieved Documents: {topk_concat}. \nProvide only the whole summarization of given document and whether the query fits with the given documents and state the reasoning. Do not point out the documents.'}
+      {
+        'role': 'system',
+        'content': '''You're a research paper's abstract summarizer. Your task is to summarize retrieved research abstracts 
+        and analyze their relevance to the user's query. Use the provided citation tags (e.g., [1a], [2a], etc.) when 
+        referencing specific content from the documents. Each claim or piece of information in your summary should be 
+        supported by at least one citation.'''
+      },
+      {
+        'role': 'user',
+        'content': f'''# Query: {query}
+        # Retrieved Documents: {topk_concat}.
+        
+        Provide a comprehensive summary of the documents and analyze their relevance to the query, maximum of 200 words. 
+        Include specific citations using the provided tags to support your points. Make sure to reference evidence from 
+        both sets of documents (a and b series) when possible. Focus on how the documents collectively address the query.'''
+      }
     ]
     response = self.client.chat.completions.create(
       model=self.settings.MODEL_TYPE,
