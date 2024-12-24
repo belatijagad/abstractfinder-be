@@ -15,6 +15,7 @@ class Settings(BaseSettings):
   LLM_API_KEY: str = os.getenv('LLM_API_KEY', '69420')
   MODEL_TYPE: str = os.getenv('MODEL_TYPE', 'gemini-1.5-flash')
   INDEX_PATH: str = os.getenv('INDEX_PATH', '/index')
+  JAVA_HOME: str = os.getenv('JAVA_HOME', '/usr/lib/jvm/temurin-21-jdk-amd64')
   DEBUG: bool = os.getenv('DEBUG', False)
   class Config:
     case_sensitive = True
