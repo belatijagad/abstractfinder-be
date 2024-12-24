@@ -24,7 +24,7 @@ async def search(query: str, k: int = 30):
     refined_query = await qr_service.refine_query(query)
     refined_results = retrieval_service.retrieve(refined_query, k)
     top_texts = [text['text'] for text in original_results[:3]] + [text['text'] for text in refined_results[:3]]
-    summarization = await summarizer_service.summarize_retrieval(query, top_texts)
+    summarization = '' if len(original_results) == 0 else await summarizer_service.summarize_retrieval(query, top_texts)
     return {
       'original': {'query': query, 'results': original_results},
       'refined': {'query': refined_query,'results': refined_results},

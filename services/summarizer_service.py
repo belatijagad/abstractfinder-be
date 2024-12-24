@@ -11,7 +11,7 @@ class SummarizerService:
     for i, doc in enumerate(documents): topk_concat += f'Document {i}: {doc}; '
     messages = [
       {'role': 'system', 'content': 'You\'re a research paper\'s abstract summarizer. Your task is to summarize the top-k retrieved research abstract and elaborate to the user whether it\'s relevant or not to the user\'s query.'},
-      {'role': 'user', 'content': f'# Query: {query}\n # Retrieved Documents: {topk_concat}. \nProvide only the whole summarization of given document and whether the query fits with the given documents and state the reasoning, there\'s no need to point which document.'}
+      {'role': 'user', 'content': f'# Query: {query}\n # Retrieved Documents: {topk_concat}. \nProvide only the whole summarization of given document and whether the query fits with the given documents and state the reasoning. Do not point out the documents.'}
     ]
     response = self.client.chat.completions.create(
       model=self.settings.MODEL_TYPE,

@@ -3,7 +3,6 @@ import torch
 import shutil
 import ir_datasets 
 import pyterrier as pt
-from typing import List
 from transformers import BertForSequenceClassification, BertTokenizer
 
 class RetrievalService:
@@ -24,11 +23,15 @@ class RetrievalService:
     indexer = pt.IterDictIndexer(index_dir, meta={'docno': 60, 'text': 10000, 'title': 1000})
     return indexer.index(docs)
   def retrieve(self, query: str, k: int = 30) -> list:
-    initial_results = self.retriever.search(query)[:50]
-    scores = []
-    with torch.no_grad():
-      for doc in initial_results.itertuples():
-        inputs = self.tokenizer(text=query, text_pair=doc.text, truncation=True, max_length=128, padding=True, return_tensors='pt')
-        score = self.model(**inputs).logits[0, 1].item()
-        scores.append({'docno': doc.docno, 'title': doc.title.title(), 'text': doc.text, 'score': score})
-    return sorted(scores, key=lambda x: x['score'], reverse=True)[:k]
+    try:
+      initial_results = self.retriever.search(query)[:50]
+      if len(initial_results) == 0: return []
+      scores = []
+      with torch.no_grad():
+        for doc in initial_results.itertuples():
+          inputs = self.tokenizer(text=query, text_pair=doc.text, truncation=True, max_length=128, padding=True, return_tensors='pt')
+          score = self.model(**inputs).logits[0, 1].item()
+          scores.append({'docno': doc.docno, 'title': doc.title.title(), 'text': doc.text, 'score': score})
+      return sorted(scores, key=lambda x: x['score'], reverse=True)[:k]
+    except Exception as _:
+      return []
