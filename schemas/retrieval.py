@@ -14,3 +14,4 @@ class SearchResults(BaseModel):
 class SearchResponse(BaseModel):
   original: SearchResults
   refined: SearchResults
+  summarization: str

@@ -1,9 +1,10 @@
+import os
+import torch
+import shutil
 import ir_datasets 
 import pyterrier as pt
+from typing import List
 from transformers import BertForSequenceClassification, BertTokenizer
-import os
-import shutil
-import torch
 
 class RetrievalService:
   def __init__(self) -> None:
@@ -29,5 +30,5 @@ class RetrievalService:
       for doc in initial_results.itertuples():
         inputs = self.tokenizer(text=query, text_pair=doc.text, truncation=True, max_length=128, padding=True, return_tensors='pt')
         score = self.model(**inputs).logits[0, 1].item()
-        scores.append(({'docno': doc.docno, 'title': doc.title, 'text': doc.text}, score))
-    return sorted(scores, key=lambda x: x[1], reverse=True)[:k]
+        scores.append({'docno': doc.docno, 'title': doc.title.title(), 'text': doc.text, 'score': score})
+    return sorted(scores, key=lambda x: x['score'], reverse=True)[:k]

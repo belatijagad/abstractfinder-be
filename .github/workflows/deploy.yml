@@ -1,0 +1,79 @@
+name: Deploy to VM
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install SSH key
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VM
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          # Remove old venv if exists
+          ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} '
+            rm -rf ~/fastapi-app/venv
+          '
+
+          # Install required packages (optimized)
+          ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} '
+           sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq && 
+           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-venv python3-pip
+          '
+          
+          # Create directory first
+          ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} 'mkdir -p ~/fastapi-app'
+          
+          # Create new virtual environment and install pip
+          ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} '
+            cd ~/fastapi-app &&
+            python3 -m venv venv &&
+            venv/bin/python -m pip install --upgrade pip
+          '
+          
+          # Copy files
+          scp -r ./* ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }}:~/fastapi-app/
+          
+          # Create .env file from secrets
+          ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} '
+            cat > ~/fastapi-app/.env << EOL
+            INDEX_PATH=${{ secrets.INDEX_PATH }}
+            LLM_API_KEY=${{ secrets.LLM_API_KEY }}
+            MODEL_TYPE=${{ secrets.MODEL_TYPE }}
+            EOL
+
+            # Set proper permissions
+            chmod 600 ~/fastapi-app/.env
+          '
+
+          # Install dependencies and restart service
+          ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} '
+            cd ~/fastapi-app &&
+            venv/bin/pip install -r requirements.txt &&
+            sudo systemctl restart fastapi
+          '
